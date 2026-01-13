@@ -3,6 +3,15 @@
 import ReactFlow, { Background } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useWorkflowStore } from '@/src/store/workflowStore'
+import TextNode from './nodes/TextNode'
+import ImageNode from './nodes/ImageNode'
+import LLMNode from './nodes/LLMNode'
+
+const nodeTypes = {
+  text: TextNode,
+  image: ImageNode,
+  llm: LLMNode,
+}
 
 export default function Canvas() {
   const { nodes, edges, onConnect } = useWorkflowStore()
@@ -13,6 +22,7 @@ export default function Canvas() {
         nodes={nodes}
         edges={edges}
         onConnect={onConnect}
+        nodeTypes={nodeTypes}
         fitView
         minZoom={0.1}
         maxZoom={4}
