@@ -12,6 +12,7 @@ export interface WorkflowState {
   nodes: Node<WorkflowNodeData>[]
   edges: Edge[]
   addNode: (node: Node<WorkflowNodeData>) => void
+  addNodeByType: (type: NodeType, position: { x: number; y: number }) => void
   updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => void
   removeNode: (nodeId: string) => void
   onConnect: (connection: Connection) => void
@@ -24,6 +25,18 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
     set((state) => ({
       nodes: [...state.nodes, node],
     })),
+  addNodeByType: (type, position) =>
+    set((state) => {
+      const newNode: Node<WorkflowNodeData> = {
+        id: `${type}-${Date.now()}`,
+        type,
+        position,
+        data: { type },
+      }
+      return {
+        nodes: [...state.nodes, newNode],
+      }
+    }),
   updateNodeData: (nodeId, data) =>
     set((state) => ({
       nodes: state.nodes.map((node) =>
