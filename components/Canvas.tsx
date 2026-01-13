@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useRef } from 'react'
-import ReactFlow, { Background, ReactFlowInstance } from 'reactflow'
+import ReactFlow, { Background, ReactFlowInstance, Connection } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useWorkflowStore } from '@/src/store/workflowStore'
 import TextNode from './nodes/TextNode'
@@ -22,6 +22,54 @@ export default function Canvas() {
   const onInit = useCallback((instance: ReactFlowInstance) => {
     reactFlowInstance.current = instance
   }, [])
+
+  const isValidConnection = useCallback(
+    (connection: Connection) => {
+      // Must have both source and target
+      if (!connection.source || !connection.target) {
+        return false
+      }
+
+      // No self-connections
+      if (connection.source === connection.target) {
+        return false
+      }
+
+      // Find source and target nodes
+      const sourceNode = nodes.find((node) => node.id === connection.source)
+      const targetNode = nodes.find((node) => node.id === connection.target)
+
+      if (!sourceNode || !targetNode) {
+        return false
+      }
+
+      const sourceType = sourceNode.data.type
+      const targetType = targetNode.data.type
+
+      // LLM cannot be a source (no output handle)
+      if (sourceType === 'llm') {
+        return false
+      }
+
+      // Text cannot be a target (no input handle)
+      if (targetType === 'text') {
+        return false
+      }
+
+      // Image cannot connect to Image
+      if (sourceType === 'image' && targetType === 'image') {
+        return false
+      }
+
+      // All other combinations are valid:
+      // Text → LLM ✅
+      // Text → Image ✅
+      // Image → LLM ✅
+
+      return true
+    },
+    [nodes]
+  )
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -66,6 +114,7 @@ export default function Canvas() {
         nodes={nodes}
         edges={edges}
         onConnect={onConnect}
+        isValidConnection={isValidConnection}
         nodesConnectable={true}
         nodesDraggable={true}
         elementsSelectable={true}
