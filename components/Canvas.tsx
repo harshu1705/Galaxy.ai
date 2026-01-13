@@ -2,11 +2,17 @@
 
 import ReactFlow, { Background } from 'reactflow'
 import 'reactflow/dist/style.css'
+import { useWorkflowStore } from '@/src/store/workflowStore'
 
 export default function Canvas() {
+  const { nodes, edges, onConnect } = useWorkflowStore()
+
   return (
     <div className="h-full w-full">
       <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onConnect={onConnect}
         fitView
         minZoom={0.1}
         maxZoom={4}
