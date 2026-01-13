@@ -1,0 +1,46 @@
+import { create } from 'zustand'
+import { Node, Edge, Connection, addEdge } from 'reactflow'
+
+export type NodeType = 'text' | 'image' | 'llm'
+
+export interface WorkflowNodeData {
+  type: NodeType
+  [key: string]: any
+}
+
+export interface WorkflowState {
+  nodes: Node<WorkflowNodeData>[]
+  edges: Edge[]
+  addNode: (node: Node<WorkflowNodeData>) => void
+  updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => void
+  removeNode: (nodeId: string) => void
+  onConnect: (connection: Connection) => void
+}
+
+export const useWorkflowStore = create<WorkflowState>((set) => ({
+  nodes: [],
+  edges: [],
+  addNode: (node) =>
+    set((state) => ({
+      nodes: [...state.nodes, node],
+    })),
+  updateNodeData: (nodeId, data) =>
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, ...data } }
+          : node
+      ),
+    })),
+  removeNode: (nodeId) =>
+    set((state) => ({
+      nodes: state.nodes.filter((node) => node.id !== nodeId),
+      edges: state.edges.filter(
+        (edge) => edge.source !== nodeId && edge.target !== nodeId
+      ),
+    })),
+  onConnect: (connection) =>
+    set((state) => ({
+      edges: addEdge(connection, state.edges),
+    })),
+}))
