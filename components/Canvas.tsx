@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useRef } from 'react'
-import ReactFlow, { Background, ReactFlowInstance, Connection } from 'reactflow'
+import ReactFlow, { Background, ReactFlowInstance, Connection, ConnectionLineType, BackgroundVariant } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useWorkflowStore } from '@/src/store/workflowStore'
 import TextNode from './nodes/TextNode'
@@ -16,7 +16,7 @@ const nodeTypes = {
 }
 
 export default function Canvas() {
-  const { nodes, edges, onConnect, addNodeByType } = useWorkflowStore()
+  const { nodes, edges, onConnect, addNodeByType, onNodesChange, onEdgesChange } = useWorkflowStore()
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null)
 
   const onInit = useCallback((instance: ReactFlowInstance) => {
@@ -25,8 +25,8 @@ export default function Canvas() {
 
   const isValidConnection = useCallback(
     (connection: Connection) => {
-      // Must have both source and target
-      if (!connection.source || !connection.target) {
+      // Must have a source; allow target to be undefined during hover/preview
+      if (!connection.source) {
         return false
       }
 
@@ -35,7 +35,12 @@ export default function Canvas() {
         return false
       }
 
-      // Find source and target nodes
+      // If there's no target yet (while dragging), allow the preview line
+      if (!connection.target) {
+        return true
+      }
+
+      // Find source and target nodes once both are defined
       const sourceNode = nodes.find((node) => node.id === connection.source)
       const targetNode = nodes.find((node) => node.id === connection.target)
 
@@ -113,12 +118,19 @@ export default function Canvas() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
-        connectionLineType="smoothstep"
+        connectionLineType={ConnectionLineType.SmoothStep}
         nodesConnectable={true}
         nodesDraggable={true}
+        panOnDrag={[1]}
+        zoomOnScroll={true}
+        selectNodesOnDrag={false}
         elementsSelectable={true}
+        edgesFocusable={true}
+        edgesUpdatable={true}
         nodeTypes={nodeTypes}
         onInit={onInit}
         fitView
@@ -126,9 +138,9 @@ export default function Canvas() {
         maxZoom={4}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
       >
-        <Background 
-          variant="dots" 
-          gap={20} 
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={24}
           size={1}
           color="#4B5563"
           style={{ opacity: 0.3 }}

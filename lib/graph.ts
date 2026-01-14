@@ -151,6 +151,60 @@ export function detectCycle(
 }
 
 /**
+ * Checks if the entire graph contains any cycles
+ * Uses DFS to detect back edges
+ * 
+ * @param nodes - All nodes in the graph
+ * @param edges - All edges in the graph
+ * @returns Object with hasCycle boolean and optional cycle path
+ */
+export function hasCycleInGraph(
+  nodes: Node<WorkflowNodeData>[],
+  edges: Edge[]
+): { hasCycle: boolean; cyclePath?: string[] } {
+  const adjacencyList = buildAdjacencyList(nodes, edges)
+  const visited = new Set<string>()
+  const recStack = new Set<string>()
+
+  const dfs = (nodeId: string, path: string[]): { hasCycle: boolean; cyclePath?: string[] } => {
+    visited.add(nodeId)
+    recStack.add(nodeId)
+    path.push(nodeId)
+
+    const neighbors = adjacencyList.get(nodeId) || []
+    
+    for (const neighborId of neighbors) {
+      if (!visited.has(neighborId)) {
+        const result = dfs(neighborId, [...path])
+        if (result.hasCycle) {
+          return result
+        }
+      } else if (recStack.has(neighborId)) {
+        // Found a back edge - cycle detected
+        const cycleStart = path.indexOf(neighborId)
+        const cyclePath = [...path.slice(cycleStart), neighborId]
+        return { hasCycle: true, cyclePath }
+      }
+    }
+
+    recStack.delete(nodeId)
+    return { hasCycle: false }
+  }
+
+  // Check each unvisited node (handles disconnected components)
+  for (const node of nodes) {
+    if (!visited.has(node.id)) {
+      const result = dfs(node.id, [])
+      if (result.hasCycle) {
+        return result
+      }
+    }
+  }
+
+  return { hasCycle: false }
+}
+
+/**
  * Validates that a node has the required incoming connections based on its type.
  * Text nodes are always valid. Image and LLM nodes require at least one incoming edge.
  */

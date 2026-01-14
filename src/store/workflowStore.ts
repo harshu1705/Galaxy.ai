@@ -1,10 +1,11 @@
 import { create } from 'zustand'
-import { Node, Edge, Connection, addEdge } from 'reactflow'
+import { Node, Edge, Connection, addEdge, OnNodesChange, OnEdgesChange, applyNodeChanges, applyEdgeChanges, NodeChange, EdgeChange } from 'reactflow'
 
 export type NodeType = 'text' | 'image' | 'llm'
 
 export interface WorkflowNodeData {
   type: NodeType
+  error?: string
   [key: string]: any
 }
 
@@ -16,6 +17,8 @@ export interface WorkflowState {
   updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => void
   removeNode: (nodeId: string) => void
   onConnect: (connection: Connection) => void
+  onNodesChange: OnNodesChange
+  onEdgesChange: OnEdgesChange
 }
 
 export const useWorkflowStore = create<WorkflowState>((set) => ({
@@ -85,4 +88,12 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
         edges: newEdge,
       }
     }),
+  onNodesChange: (changes: NodeChange[]) =>
+    set((state) => ({
+      nodes: applyNodeChanges(changes, state.nodes),
+    })),
+  onEdgesChange: (changes: EdgeChange[]) =>
+    set((state) => ({
+      edges: applyEdgeChanges(changes, state.edges),
+    })),
 }))
