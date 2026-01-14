@@ -115,6 +115,7 @@ export default function Canvas() {
         edges={edges}
         onConnect={onConnect}
         isValidConnection={isValidConnection}
+        connectionLineType="smoothstep"
         nodesConnectable={true}
         nodesDraggable={true}
         elementsSelectable={true}

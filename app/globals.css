@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* React Flow connection line styling */
+.react-flow__connection-line {
+  stroke-width: 2px;
+}
+
+.react-flow__handle {
+  cursor: crosshair;
+}
+
+.react-flow__handle-connecting {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+.react-flow__handle-valid {
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
