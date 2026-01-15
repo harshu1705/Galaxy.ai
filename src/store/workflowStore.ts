@@ -3,9 +3,18 @@ import { Node, Edge, Connection, addEdge, OnNodesChange, OnEdgesChange, applyNod
 
 export type NodeType = 'text' | 'image' | 'llm'
 
+export type ExecutionStatus = 'idle' | 'running' | 'success' | 'error'
+
 export interface WorkflowNodeData {
   type: NodeType
+  // Execution State
+  status?: ExecutionStatus
+  output?: string
+  executionTime?: number
+  // Validation State
   error?: string
+  // Content State
+  text?: string
   [key: string]: any
 }
 
@@ -15,6 +24,7 @@ export interface WorkflowState {
   addNode: (node: Node<WorkflowNodeData>) => void
   addNodeByType: (type: NodeType, position: { x: number; y: number }) => void
   updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => void
+  updateNode: (nodeId: string, updates: Partial<Node<WorkflowNodeData>>) => void
   removeNode: (nodeId: string) => void
   onConnect: (connection: Connection) => void
   onNodesChange: OnNodesChange
@@ -45,6 +55,14 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
       nodes: state.nodes.map((node) =>
         node.id === nodeId
           ? { ...node, data: { ...node.data, ...data } }
+          : node
+      ),
+    })),
+  updateNode: (nodeId, updates) =>
+    set((state) => ({
+      nodes: state.nodes.map((node) =>
+        node.id === nodeId
+          ? { ...node, ...updates }
           : node
       ),
     })),
@@ -90,7 +108,12 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
         if (node.id === connection.source || node.id === connection.target) {
           return {
             ...node,
-            data: { ...node.data, error: undefined },
+            data: {
+              ...node.data,
+              error: undefined,
+              status: 'idle' as ExecutionStatus,
+              output: undefined
+            },
           }
         }
         return node

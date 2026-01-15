@@ -90,19 +90,6 @@ export default function Sidebar() {
 
   return (
     <aside className="w-60 flex-shrink-0 border-r border-gray-800 bg-gray-900 p-4 flex flex-col gap-4">
-      <div>
-        <button
-          onClick={handleRun}
-          disabled={isInvalid}
-          className={`w-full px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${isInvalid
-            ? 'bg-red-500/10 text-red-500 border border-red-500/50 cursor-not-allowed'
-            : 'bg-blue-600 text-white hover:bg-blue-500 border border-transparent'
-            }`}
-        >
-          {isInvalid ? 'Fix Errors to Run' : 'Run Workflow'}
-        </button>
-      </div>
-
       <div className="flex flex-col gap-2">
         <button
           draggable

@@ -1,8 +1,13 @@
-import { Handle, Position } from 'reactflow'
-import { WorkflowNodeData } from '@/src/store/workflowStore'
+import { Handle, Position, NodeProps } from 'reactflow'
+import { WorkflowNodeData, useWorkflowStore } from '@/src/store/workflowStore'
 
-export default function TextNode({ data }: { data: WorkflowNodeData }) {
+export default function TextNode({ id, data }: NodeProps<WorkflowNodeData>) {
+  const updateNodeData = useWorkflowStore((state) => state.updateNodeData)
   const hasError = !!data.error
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    updateNodeData(id, { text: e.target.value })
+  }
 
   return (
     <div className={`bg-gray-800 rounded-lg border shadow-lg min-w-[280px] ${hasError ? 'border-red-500' : 'border-gray-700'}`}>
@@ -13,7 +18,8 @@ export default function TextNode({ data }: { data: WorkflowNodeData }) {
         <textarea
           className="w-full h-32 px-3 py-2 bg-gray-900 border border-gray-700 rounded text-sm text-gray-300 placeholder-gray-500 resize-none focus:outline-none focus:border-gray-600 mb-2"
           placeholder="Enter your text..."
-          readOnly
+          value={data.text || ''}
+          onChange={handleChange}
         />
         {hasError && (
           <div className="text-xs text-red-400 font-medium">
