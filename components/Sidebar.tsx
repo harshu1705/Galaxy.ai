@@ -40,21 +40,39 @@ export default function Sidebar() {
     })
 
     nodes.forEach((node) => {
-      // Validate: Text nodes must have content (mock check as we don't have content in store yet, so just check connection)
-      // Actually, let's use connection as the main rule for now for all nodes except possibly single nodes.
-      // Rule: Nodes must be connected to at least one other node, UNLESS it's the only node? 
-      // Let's enforce: "All nodes must be part of a connection"
-
       let error = ''
-      if (!connectedNodeIds.has(node.id) && nodes.length > 1) {
-        error = 'Node is not connected'
+
+      switch (node.type) {
+        case 'llm':
+          // LLM requires at least one input (incoming connection)
+          {
+            const hasInput = edges.some(edge => edge.target === node.id)
+            if (!hasInput) {
+              error = 'LLM node requires at least one input'
+            }
+          }
+          break
+
+        case 'image':
+          // Image requires at least one input (incoming connection)
+          {
+            const hasInput = edges.some(edge => edge.target === node.id)
+            if (!hasInput) {
+              error = 'Image node requires at least one input'
+            }
+          }
+          break
+
+        case 'text':
+          // Text node is always valid
+          break
       }
 
       if (error) {
         hasErrors = true
         updateNodeData(node.id, { error })
       } else {
-        // Clear error if valid
+        // Clear error if it was previously set
         if (node.data.error) {
           updateNodeData(node.id, { error: undefined })
         }
@@ -77,8 +95,8 @@ export default function Sidebar() {
           onClick={handleRun}
           disabled={isInvalid}
           className={`w-full px-4 py-2 text-sm font-semibold rounded-lg transition-colors ${isInvalid
-              ? 'bg-red-500/10 text-red-500 border border-red-500/50 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-500 border border-transparent'
+            ? 'bg-red-500/10 text-red-500 border border-red-500/50 cursor-not-allowed'
+            : 'bg-blue-600 text-white hover:bg-blue-500 border border-transparent'
             }`}
         >
           {isInvalid ? 'Fix Errors to Run' : 'Run Workflow'}

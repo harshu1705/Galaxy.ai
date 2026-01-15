@@ -1,7 +1,29 @@
-import { Handle, Position } from 'reactflow'
-import { WorkflowNodeData } from '@/src/store/workflowStore'
+import { Handle, Position, NodeProps } from 'reactflow'
+import { WorkflowNodeData, useWorkflowStore } from '@/src/store/workflowStore'
+import { validateWorkflow } from '@/lib/validateWorkflow'
 
-export default function LLMNode({ data }: { data: WorkflowNodeData }) {
+// Use NodeProps to get id passed by ReactFlow
+export default function LLMNode({ id, data }: NodeProps<WorkflowNodeData>) {
+  const updateNodeData = useWorkflowStore((state) => state.updateNodeData)
+
+  const handleRun = () => {
+    // Get current state from store directly to avoid re-renders subscription
+    const { nodes, edges } = useWorkflowStore.getState()
+
+    // Validate
+    const validation = validateWorkflow(id, nodes, edges)
+
+    if (!validation.isValid) {
+      updateNodeData(id, { error: validation.error })
+    } else {
+      // Clear error if valid
+      updateNodeData(id, { error: undefined })
+
+      // TODO: Proceed with execution (step after validation)
+      console.log('Validation passed for node:', id)
+    }
+  }
+
   const hasError = !!data.error
 
   return (
@@ -18,9 +40,10 @@ export default function LLMNode({ data }: { data: WorkflowNodeData }) {
           />
         </div>
         <button
+          onClick={handleRun}
           className={`w-full px-4 py-2 text-sm font-medium rounded border transition-colors ${hasError
-              ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed'
-              : 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600 hover:text-white'
+            ? 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed'
+            : 'bg-gray-700 text-gray-200 border-gray-600 hover:bg-gray-600 hover:text-white'
             }`}
           disabled={hasError}
         >

@@ -84,8 +84,21 @@ export const useWorkflowStore = create<WorkflowState>((set) => ({
         state.edges
       )
 
+      // Clear errors on source and target nodes when connected
+      // This allows the user to retry "Run" after fixing connectivity issues
+      const newNodes = state.nodes.map((node) => {
+        if (node.id === connection.source || node.id === connection.target) {
+          return {
+            ...node,
+            data: { ...node.data, error: undefined },
+          }
+        }
+        return node
+      })
+
       return {
         edges: newEdge,
+        nodes: newNodes,
       }
     }),
   onNodesChange: (changes: NodeChange[]) =>
