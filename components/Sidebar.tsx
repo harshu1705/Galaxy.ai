@@ -13,83 +13,78 @@ export default function Sidebar() {
     }),
     shallow
   )
-  const [isInvalid, setIsInvalid] = useState(false)
 
-  // Reset invalid state when nodes/edges change
-  useEffect(() => {
-    if (isInvalid) {
-      setIsInvalid(false)
-      // Optional: Clear errors on change if desired, but prompt says "When validation passes, clear..."
-      // We will clear on next Run click to clear existing errors.
+  /* Step 8: Persistence Implementation */
+  const handleExport = () => {
+    const data = {
+      nodes,
+      edges,
+      version: '1.0.0',
     }
-  }, [nodes, edges, isInvalid])
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `galaxy-workflow-${Date.now()}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string)
+
+        // Basic Shape Validation
+        if (!Array.isArray(json.nodes) || !Array.isArray(json.edges)) {
+          alert('Invalid workflow file: Missing nodes or edges array.')
+          return
+        }
+
+        // Hydrate Store
+        useWorkflowStore.getState().setNodes(json.nodes)
+        useWorkflowStore.getState().setEdges(json.edges)
+      } catch (err) {
+        alert('Failed to parse workflow file.')
+        console.error(err)
+      }
+    }
+    reader.readAsText(file)
+  }
 
   const handleDragStart = (e: React.DragEvent<HTMLButtonElement>, nodeType: 'text' | 'image' | 'llm') => {
     e.dataTransfer.setData('application/node-type', nodeType)
     e.dataTransfer.effectAllowed = 'move'
   }
 
-  const handleRun = () => {
-    let hasErrors = false
-    const connectedNodeIds = new Set<string>()
-
-    // Simple validation: check if nodes are connected
-    edges.forEach((edge) => {
-      connectedNodeIds.add(edge.source)
-      connectedNodeIds.add(edge.target)
-    })
-
-    nodes.forEach((node) => {
-      let error = ''
-
-      switch (node.type) {
-        case 'llm':
-          // LLM requires at least one input (incoming connection)
-          {
-            const hasInput = edges.some(edge => edge.target === node.id)
-            if (!hasInput) {
-              error = 'LLM node requires at least one input'
-            }
-          }
-          break
-
-        case 'image':
-          // Image requires at least one input (incoming connection)
-          {
-            const hasInput = edges.some(edge => edge.target === node.id)
-            if (!hasInput) {
-              error = 'Image node requires at least one input'
-            }
-          }
-          break
-
-        case 'text':
-          // Text node is always valid
-          break
-      }
-
-      if (error) {
-        hasErrors = true
-        updateNodeData(node.id, { error })
-      } else {
-        // Clear error if it was previously set
-        if (node.data.error) {
-          updateNodeData(node.id, { error: undefined })
-        }
-      }
-    })
-
-    if (hasErrors) {
-      setIsInvalid(true)
-    } else {
-      setIsInvalid(false)
-      // Allow execution later (mock)
-      console.log('Workflow is valid, ready to run')
-    }
-  }
-
   return (
     <aside className="w-60 flex-shrink-0 border-r border-gray-800 bg-gray-900 p-4 flex flex-col gap-4">
+      {/* Persistence Controls */}
+      <div className="flex gap-2">
+        <button
+          onClick={handleExport}
+          className="flex-1 px-3 py-2 text-xs font-medium text-gray-200 bg-gray-800 border border-gray-700 rounded hover:bg-gray-700 hover:text-white transition-colors"
+        >
+          Save
+        </button>
+        <label className="flex-1 px-3 py-2 text-xs font-medium text-gray-200 bg-gray-800 border border-gray-700 rounded hover:bg-gray-700 hover:text-white transition-colors text-center cursor-pointer">
+          Load
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleImport}
+            className="hidden"
+          />
+        </label>
+      </div>
+
+      <div className="h-px bg-gray-800 my-1" />
+
       <div className="flex flex-col gap-2">
         <button
           draggable

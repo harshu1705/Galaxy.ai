@@ -27,6 +27,8 @@ export interface WorkflowState {
   updateNode: (nodeId: string, updates: Partial<Node<WorkflowNodeData>>) => void
   removeNode: (nodeId: string) => void
   onConnect: (connection: Connection) => void
+  setNodes: (nodes: Node<WorkflowNodeData>[]) => void
+  setEdges: (edges: Edge[]) => void
   onNodesChange: OnNodesChange
   onEdgesChange: OnEdgesChange
 }
@@ -34,6 +36,8 @@ export interface WorkflowState {
 export const useWorkflowStore = create<WorkflowState>((set) => ({
   nodes: [],
   edges: [],
+  setNodes: (nodes) => set({ nodes }),
+  setEdges: (edges) => set({ edges }),
   addNode: (node) =>
     set((state) => ({
       nodes: [...state.nodes, node],
