@@ -70,7 +70,7 @@ export function getUpstreamNodes(
 
   while (stack.length > 0) {
     const currentId = stack.pop()!
-    
+
     if (visited.has(currentId)) {
       continue
     }
@@ -172,7 +172,7 @@ export function hasCycleInGraph(
     path.push(nodeId)
 
     const neighbors = adjacencyList.get(nodeId) || []
-    
+
     for (const neighborId of neighbors) {
       if (!visited.has(neighborId)) {
         const result = dfs(neighborId, [...path])
@@ -235,6 +235,50 @@ export function validateNodeInputs(
     return {
       isValid: false,
       error: `${label} node requires at least one input`,
+    }
+  }
+
+  return { isValid: true }
+}
+
+/**
+ * Validates that incoming connections are of valid types.
+ * Enforces:
+ * - Image Node inputs must be Text
+ * - Text Nodes cannot have inputs
+ * - LLM Nodes can have Text or Image inputs
+ */
+export function validateConnectionTypes(
+  nodeId: string,
+  nodes: Node<WorkflowNodeData>[],
+  edges: Edge[]
+): { isValid: boolean; error?: string } {
+  const node = nodes.find((n) => n.id === nodeId)
+  if (!node) return { isValid: false }
+
+  const nodeType = node.data.type
+  const incomingEdges = edges.filter((edge) => edge.target === nodeId)
+
+  for (const edge of incomingEdges) {
+    const sourceNode = nodes.find((n) => n.id === edge.source)
+    if (!sourceNode) continue
+
+    const sourceType = sourceNode.data.type
+
+    // Rule: Image nodes can only be connected to Text nodes
+    if (nodeType === 'image' && sourceType !== 'text') {
+      return {
+        isValid: false,
+        error: 'Image nodes can only be connected to Text nodes',
+      }
+    }
+
+    // Rule: Text nodes cannot have inputs (redundant check)
+    if (nodeType === 'text') {
+      return {
+        isValid: false,
+        error: 'Text nodes cannot have inputs',
+      }
     }
   }
 

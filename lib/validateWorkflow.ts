@@ -1,12 +1,13 @@
 import type { Node, Edge } from 'reactflow'
 import type { WorkflowNodeData } from '@/src/store/workflowStore'
-import { hasCycleInGraph, validateNodeInputs } from './graph'
+import { hasCycleInGraph, validateNodeInputs, validateConnectionTypes } from './graph'
 
 /**
  * Validates if a workflow node can be executed
  * Runs validations in order:
  * 1. Cycle detection (structural correctness)
  * 2. Input completeness (semantic correctness)
+ * 3. Connection Type Correctness (Topology)
  * 
  * @param targetNodeId - The node ID to validate
  * @param nodes - All nodes in the workflow
@@ -20,7 +21,7 @@ export function validateWorkflow(
 ): { isValid: boolean; error?: string } {
   // Find the target node
   const targetNode = nodes.find((node) => node.id === targetNodeId)
-  
+
   if (!targetNode) {
     return {
       isValid: false,
@@ -31,7 +32,7 @@ export function validateWorkflow(
   // Step 1: Cycle detection (structural correctness)
   // Check if the entire graph contains any cycles
   const cycleResult = hasCycleInGraph(nodes, edges)
-  
+
   if (cycleResult.hasCycle) {
     return {
       isValid: false,
@@ -39,10 +40,21 @@ export function validateWorkflow(
     }
   }
 
-  // Step 2: Input completeness (semantic correctness)
+  // Step 2: Connection Type Validation (Topological correctness)
+  // Check for invalid edge pairings (e.g. Image -> Text)
+  const connectionTypeValidation = validateConnectionTypes(targetNodeId, nodes, edges)
+
+  if (!connectionTypeValidation.isValid) {
+    return {
+      isValid: false,
+      error: connectionTypeValidation.error || 'Invalid connection type',
+    }
+  }
+
+  // Step 3: Input completeness (semantic correctness)
   // Check if the target node has all required inputs
   const inputValidation = validateNodeInputs(targetNodeId, nodes, edges)
-  
+
   if (!inputValidation.isValid) {
     return {
       isValid: false,
